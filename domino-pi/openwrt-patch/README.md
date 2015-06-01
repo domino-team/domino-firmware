@@ -19,7 +19,8 @@ quilt push -a
 ```
 
 3. Compile
-run 
+------------
+run make menuconfig
 ```
 make menuconfig
 ```
@@ -27,5 +28,6 @@ Choose "Domino Wifi for things" as compile target, then run
 ```
 make
 ```
+It will take hours depends on how fast your computer and Internet are.
 
 Please be noted the above steps will build a minimum firmware for Domino Pi board. If you need more features, refer to Domino Documentations. 
