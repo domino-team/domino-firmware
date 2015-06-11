@@ -1,0 +1,108 @@
+<%
+local http = require("luci.http")
+http.prepare_content("text/html; charset=utf-8")
+-%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+ This file is part of YunWebUI.
+
+ YunWebUI is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+ As a special exception, you may use this file as part of a free software
+ library without restriction.  Specifically, if other files instantiate
+ templates or use macros or inline functions from this file, or you compile
+ this file and link it with other files to produce an executable, this
+ file does not by itself cause the resulting executable to be covered by
+ the GNU General Public License.  This exception does not however
+ invalidate any other reasons why the executable file might be covered by
+ the GNU General Public License.
+
+ Copyright 2013 Arduino LLC (http://www.arduino.cc/)
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+  <title>Domino</title>
+  <style type="text/css" media="screen">
+    #editor { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+	body{
+		margin:0;
+	}
+</style>
+</head>
+<body>
+	<%
+	
+	%>
+	<div id="toolbar" style="height:30px;width:100%;background:#59c367; padding:3px;">
+		<input id="ace_reload" type="button" value="reload" onclick="window.location.reload();">
+		<input id="ace_save" type="button" value="save" onclick="save();">
+		<select id="select_mode" onchange="setmode(this);"></select>
+		<a style="font-size:12px;text-decoration:none" href="http://domino.io/ace-editor">Editor is not displayed properly? </a>
+		<a href="<%= pcdata(controller .. '/webpanel') %>"><img style="height:30px;float:right;margin-top:-3px" src="<%= resource %>/domino/logo.png" alt="Domino"/></a>
+	</div>
+	<form id="real_form" name="real_form" method="post" action="" enctype="multipart/form-data">
+		 <input type="hidden" name="contents" id="contents" value=""/>
+	</form>
+	 <div id="editor" style="min-height:600px;top:30px"><%=pcdata(content)%></div>
+		
+	<script src="http://domino.io/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+	<script src="http://domino.io/ace/src-noconflict/ext-modelist.js" type="text/javascript" charset="utf-8"></script>
+	<script>
+		function foo(items) {
+			var x = "All this is syntax highlighted";
+			return x;
+		}
+		if(!ace) {
+			alert("You need to connect to the Internet to download ACE scripts");
+		}
+		var editor = ace.edit("editor");
+		
+		var modelist = ace.require("ace/ext/modelist");
+		var filePath = "<%=path%>";
+		var select_mode=document.getElementById("select_mode");
+		for (var mode in modelist.supportedModes ){
+			var option=document.createElement("option");
+			option.value="ace/mode/"+mode.toLowerCase();
+			option.text=mode;
+			select_mode.add(option);
+		}
+		var mode = modelist.getModeForPath(filePath).mode;
+		select_mode.value=mode;
+		editor.setTheme("ace/theme/monokai");
+		editor.getSession().setMode(mode);
+		editor.getSession().setNewLineMode("unix");
+		function setmode(select){
+			value=select.options[select.selectedIndex].value;
+			editor.getSession().setMode(value);
+		}
+		function save(){
+			var contents=editor.getSession().getValue();
+			var real_form = document.getElementById("real_form");
+			var form_contents = document.getElementById("contents");
+			form_contents.value=contents;
+			real_form.submit();
+		}
+	</script>
+
+</body>
+</html>

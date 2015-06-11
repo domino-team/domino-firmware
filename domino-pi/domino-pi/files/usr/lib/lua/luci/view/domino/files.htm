@@ -1,0 +1,149 @@
+<%
+local http = require("luci.http")
+http.prepare_content("text/html; charset=utf-8")
+-%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+ This file is part of YunWebUI.
+
+ YunWebUI is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+ As a special exception, you may use this file as part of a free software
+ library without restriction.  Specifically, if other files instantiate
+ templates or use macros or inline functions from this file, or you compile
+ this file and link it with other files to produce an executable, this
+ file does not by itself cause the resulting executable to be covered by
+ the GNU General Public License.  This exception does not however
+ invalidate any other reasons why the executable file might be covered by
+ the GNU General Public License.
+
+ Copyright 2013 Arduino LLC (http://www.arduino.cc/)
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+  <link rel="stylesheet" type="text/css" href="<%= resource %>/domino/style.css" />
+  <title>Domino</title>
+</head>
+<body>
+<div id="container">
+  <div id="header">
+    <div class="wrapper">
+      <h1>Domino</h1>
+      <div id="logo"><a href="<%= pcdata(controller .. '/webpanel') %>"><img src="<%= resource %>/domino/logo.png" alt="Domino"/></a></div>
+      <div id="logophone"><a href="<%= pcdata(controller .. '/webpanel') %>"><img src="<%= resource %>/domino/logo_phone.png" alt="Domino"/></a></div>
+	  <form method="get" action="<%= pcdata(controller .. '/webpanel/config') %>">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="System" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/config') %>');">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Network" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/network') %>');">
+		  <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Luci" onclick="javascript:return goto('<%= pcdata(controller .. '/') %>');">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Editor" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/files') %>');">
+       </form>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div id="welcome_container">
+        <h2>Edit files using the web editor!</h2>
+      </div>
+    </div>
+    <div class="wrapper divide" id="recap">
+      <div id="dashboard_container">
+        <div id="sections_container">
+			<h2 style="text-transform:none;margin-bottom:10px;background:#59c367;padding:5px">
+			<%
+			function split(str, pat)
+			   local t = {}  -- NOTE: use {n = 0} in Lua-5.0
+			   local fpat = "(.-)" .. pat
+			   local last_end = 1
+			   local s, e, cap = str:find(fpat, 1)
+			   while s do
+				  if s ~= 1 or cap ~= "" then
+				 table.insert(t,cap)
+				  end
+				  last_end = e+1
+				  s, e, cap = str:find(fpat, last_end)
+			   end
+			   if last_end <= #str then
+				  cap = str:sub(last_end)
+				  table.insert(t, cap)
+			   end
+			   return t
+			end
+			function split_path(str)
+			   return split(path,'[\\/]+')
+			end
+			
+			write("<a style='color:white' href='"..pcdata(controller .. "/webpanel/files?path=/") .."'>[root]</a> / ")
+			folders = split_path(path)
+			local s=""
+			for i,folder in ipairs(folders) do
+				s = s .. "/" .. folder
+				write("<a style='color:white' href='"..pcdata(controller .. "/webpanel/files?path="..s) .."'>" .. folder .. "</a> / ")
+			end
+			%>
+			</h2>
+			<table style="width:100%">
+			<tr style="background:#DAEFDF"><td>Name</td><td>Type</td><td>Modify Date</td><td>Size</td></tr>
+          <%
+		  for i,data in ipairs(files) do
+			file=data["fullpath"]
+			if(data["type"]=="dir") then
+				write("<tr><td><a href='"..pcdata(controller .. "/webpanel/files?path="..path..file) .."'>".. file.."</a> </td><td>".. data["type"].."</td><td>"..os.date("%Y/%m/%d %H:%M",data["mtime"]) .."</td><td>"..data["size"] .."</td><tr>" )
+			end
+		  end
+		  for i,data in ipairs(files) do
+			file=data["fullpath"]
+			if(data["type"]~="dir") then
+				write("<tr><td><a target=_blank href='"..pcdata(controller .. "/webpanel/editor?path="..path..file) .."'>".. file.."</a> </td><td></td><td>"..os.date("%Y/%m/%d %H:%M",data["mtime"]) .."</td><td>"..data["size"] .."</td><tr>" )
+			end
+		  end
+		  %>
+		  </table>
+        </div>
+		
+      </div>
+    </div>
+
+
+    <!--
+    <div class="wrapper divide" id="www">
+      <div id="currsketch">
+        <p>Current sketch: <a href="#">sketch title</a></p>
+        <ul id="wwwlist">
+          <li class="folder"><a href="#">folder1</a></li>
+        </ul>
+      </div>
+      <p>Other www folders: </p>
+      <ul id="wwwotherlist">
+        <li class="folder"><a href="#">folder2</a></li>
+        <li class="folder"><a href="#">folder3</a></li>
+        <li class="folder"><a href="#">folder4</a></li>
+        <li class="folder"><a href="#">folder5</a></li>
+      </ul>
+    </div>
+    -->
+    <div class="wrapper footer">
+      This Domino Board runs a version of OpenWrt built on <%= os.date("%b %d, %Y", current_build_date) %>
+    </div>
+  </div>
+  <!-- #content -->
+  <br class="clear"/>
+</div>
+<!-- #container -->
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/zepto.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/webpanel.js"></script>
+</body>
+</html>

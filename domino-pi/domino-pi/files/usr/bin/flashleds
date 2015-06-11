@@ -1,0 +1,14 @@
+#!/bin/sh
+
+i=1
+while [ "$i" -le 100 ]
+do
+        echo 1 > /sys/class/leds/domino\:red\:wan/brightness
+        echo 0 > /sys/class/leds/domino\:blue\:wlan/brightness
+        sleep 0.2
+        echo 0 > /sys/class/leds/domino\:red\:wan/brightness
+        echo 1 > /sys/class/leds/domino\:blue\:wlan/brightness
+        sleep 0.2
+        i=$((i+1))
+done
+

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+[ "${ACTION}" = "released" ] || exit 0
+
+. /lib/functions.sh
+
+logger "$BUTTON pressed for $SEEN seconds"
+
+if [ "$SEEN" -lt 2 ]
+then
+        /usr/bin/wifionoff          
+elif [ "$SEEN" -gt 5 ]
+then                                       
+        echo "FACTORY RESET" > /dev/console
+        /usr/bin/flashleds &
+        jffs2reset -y && reboot &          
+fi     

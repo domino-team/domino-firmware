@@ -1,0 +1,284 @@
+<%
+local http = require("luci.http")
+http.prepare_content("text/html; charset=utf-8")
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+ This file is part of YunWebUI.
+ YunWebUI is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ As a special exception, you may use this file as part of a free software
+ library without restriction.  Specifically, if other files instantiate
+ templates or use macros or inline functions from this file, or you compile
+ this file and link it with other files to produce an executable, this
+ file does not by itself cause the resulting executable to be covered by
+ the GNU General Public License.  This exception does not however
+ invalidate any other reasons why the executable file might be covered by
+ the GNU General Public License.
+ Copyright 2013 Arduino LLC (http://www.arduino.cc/)
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+  <link rel="stylesheet" type="text/css" href="<%= resource %>/domino/style.css" />
+  <title>Domino</title>
+</head>
+<body>
+<div id="container">
+  <div id="header">
+    <div class="wrapper">
+      <h1>Domino</h1>
+      <div id="logo"><a href="<%= pcdata(controller .. '/webpanel') %>"><img src="<%= resource %>/domino/logo.png" alt="Domino"/></a></div>
+      <div id="logophone"><a href="<%= pcdata(controller .. '/webpanel') %>"><img src="<%= resource %>/domino/logo_phone.png" alt="Domino"/></a></div>
+	  <form method="get" action="<%= pcdata(controller .. '/webpanel/config') %>">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="System" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/config') %>');">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Network" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/network') %>');">
+		  <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Luci" onclick="javascript:return goto('<%= pcdata(controller .. '/') %>');">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Editor" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/files') %>');">
+       </form>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper">
+      <div id="welcome_container">
+        <h2>Welcome to <strong><%= hostname %></strong>, your Domino.IO</h2>
+      </div>
+      <div id="configurebtn_container">
+        
+      </div>
+    </div>
+    <div class="wrapper divide" id="recap">
+      <div id="dashboard_container">
+        <div id="sections_container">
+          <% for name, data in pairs(ifaces) do %>
+          <div class="section">
+            <h3><% if data["pretty_name"] then %><%= data["pretty_name"] %> (<%= name %>)<% else %>Interface <%= name %><% end %> <% if data["address"] then %><span class="connected">connected</span><% else %><span class="disconnected">disconnected</span><% end %></h3>
+            <table>
+              <tr></tr>
+            </table>
+            <p>
+              <% if data["address"] then %>
+                <span class="row">
+                  <span class="desc">Address</span>
+                  <span class="val"><%= data["address"] %></span>
+                </span>
+                <span class="row">
+                  <span class="desc">Netmask</span>
+                  <span class="val"><%= data["netmask"] %></span>
+                </span>
+              <% end %>
+              <span class="row">
+                <span class="desc">MAC Address</span>
+                <span class="val"><%= data["mac"] %></span>
+              </span>
+              <span class="row">
+                <span class="desc">Received</span>
+                <span class="val"><%= data["rx"] %></span>
+              </span>
+              <span class="row">
+                <span class="desc">Transmitted</span>
+                <span class="val"><%= data["tx"] %></span>
+              </span>
+            </p>
+          </div>
+          <% end %>
+        </div>
+		<div id="sections_container">
+			<h3>Devices</h3>
+			<%
+			
+			local function round(num, idp)
+			  local mult = 10^(idp or 0)
+			  return math.floor(num * mult + 0.5) / mult
+			end
+			for i,mount in ipairs(disks) do
+				local mountpoint=mount.mountpoint
+				local fs=mount.fs
+				if string.match(fs,"/dev/sd*") or mountpoint=="/overlay" then
+					--local percent_text=mount.percent
+					local available=tonumber(mount.available)/tonumber(mount.blocks);
+					local used=1-available
+					local available=tonumber(mount.available)
+					local total=tonumber(mount.blocks)
+					local size=total .. "K"
+					if(mountpoint=="/overlay") then
+					    mountpoint="/"
+					    available=tonumber(mount.available)/(1024*16);
+					    total=1024*16
+					    used = 1-available
+					end
+					if total>1024 and total < 1024*1024 then
+						size=round(total/1024,2) .. "M"
+					elseif total > 1024*1024 then
+						size=round(total/1024/1024,2) .. "G"
+					end
+					local percent_text=tostring(round(used,2))*100 .. "%"
+				%>
+				<div style="width:150px;height:200px;display:inline-block">
+					<a href="<%= pcdata(controller .. '/webpanel/files?path='..mountpoint) %>"><canvas id="disk<%=i%>" width="150" height="150"> </canvas></a>
+					<label style="width:100%;text-align:center;text-transform:lowercase;margin:0;padding:0"><%=mountpoint%></label>
+					<label style="width:100%;text-align:center;text-transform:capitalize;margin:0;padding:0">Total <%=size%></label>
+				</div>
+				<script >
+					var c=document.getElementById("disk<%=i%>");
+					var ctx=c.getContext("2d");
+					
+					ctx.beginPath();
+					ctx.moveTo(75,75);
+					ctx.arc(75,75,70,0,-2*Math.PI*<%=available%>,true);
+					ctx.lineTo(75,75);
+					ctx.fillStyle="#59c367";
+					ctx.fill();
+					
+					ctx.beginPath();
+					ctx.moveTo(75,75);
+					ctx.arc(75,75,70,0,2*Math.PI*<%=used%>);
+					ctx.lineTo(75,75);
+					ctx.fillStyle="#eeb01e";
+					ctx.fill();
+					ctx.font="9pt Calibri";
+					ctx.fillStyle="black";
+					ctx.fillText("Used <%=percent_text%>",90,85)
+				</script>
+				<%
+				end
+			end --storages
+			if cameras then
+				for i,camera in ipairs(cameras) do
+					if mjpg then%>
+						<div style="width:150px;height:200px;display:inline-block">
+						<a href="#">
+							<image id="img1" class="round-img" src=":8083/?action=stream"></image>
+							<label style="width:100%;text-align:center;text-transform:lowercase;margin:0;padding:0"><%=camera.device%></label>
+						</a>
+						<script>
+							var url_base=window.location.protocol + "//" + window.location.hostname + ":<%=camera.port%>";
+							var url_video =url_base+ "/?action=stream";
+							var img1 = document.getElementById("img1");
+							img1.src=url_video;
+							img1.parentNode.href=url_base;
+						</script>
+						</div>
+					<%else%>
+						<div style="width:150px;height:200px;display:inline-block">
+							<img src="/luci-static/resources/domino/webcam.png">
+							<label style="width:100%;text-align:center;text-transform:lowercase;margin:0;padding:0"><%=camera.device%></label>
+						</div>
+					<%end
+				end
+			end
+			%>
+			
+		</div>
+		
+      </div>
+    </div>
+    <% if last_log then %>
+    <div class="wrapper divide">
+      <div id="log_container">
+        <p>There was a problem last time I tried configuring wireless network.
+        <% if last_log_error_message then %>
+          <br/>The error is: <strong><%= last_log_error_message %></strong>
+        <% end %>
+        </p>
+        <p>Check the following log for details of what went wrong (<a id="dmesg_toogle" href="#">Show</a>)</p>
+        <textarea id="dmesg" rows="20" readonly="readonly"><% for i,line in pairs(last_log) do %><%= line %>
+<% end %></textarea>
+        <script language="javascript">document.getElementsByTagName("textarea")[0].scrollTop = 99999;</script>
+      </div>
+    </div>
+    <% end %>
+    <% if update_file then %>
+    <div class="wrapper divide">
+      <p>A file named <strong><%= update_file %></strong> has been found on the SD card.<br />
+        <% if update_file_build_date then %>
+        It contains a version of OpenWrt-Y&uacute;n built on <strong><%= os.date("%b %d, %Y", update_file_build_date) %></strong>.
+        <% if update_file_newer then %>
+        It's a <strong>newer</strong> version!
+        <% end %>
+        <% end %>
+        <br/>Do you wish to use it to reset your Y&uacute;n?</p>
+      <p class="highlight alert">
+        <strong>ATTENTION!!</strong><br/>This will erase everything stored on the Domino and update the whole system! Back up any custom files on your Domino before proceeding!
+      </p>
+      <p>
+      <form method="post" action="<%= pcdata(controller .. '/webpanel/reset_board') %>">
+      <ul>
+          <li>
+            <div class="input_container">
+              <input class="btTxt submit saveForm alert" type="submit" name="button" value="Reset" onclick="javascript:return confirm('Are you sure you want to RESET the Y&uacute;n &#20113;?\nThis operation is irreversible!!');">
+            </div>
+          </li>
+        </ul>
+      </form>
+      </p>
+    </div>
+    <% end %>
+    <div class="wrapper divide" style="display:<%if(board=="qi") then write("block") else write("none") end%>">
+      <h3>Upload sketch</h3>
+      <p class="description">Select a <strong>.hex</strong> file (compiled sketch) and upload it on the microcontroller.
+        <br>
+        For more information about how to obtain the <strong>.hex</strong> file of your sketch, visit <a target="_blank" href="http://arduino.cc/en/Hacking/BuildProcess">this page</a>.
+      </p>
+      <p>
+      <form method="post" action="<%= pcdata(controller .. '/webpanel/upload_sketch') %>" enctype="multipart/form-data">
+        <ul>
+          <li>
+            <div class="input_container">
+              <input id="sketch" name="sketch_hex" type="file">
+            </div>
+            <p><br/></p>
+          </li>
+          <li>
+            <div class="input_container">
+              <input id="upload_button" class="btTxt submit saveForm" type="submit" name="button" value="Upload">
+            </div>
+          </li>
+          <li id="progress_bar_upload" style="display: none">
+            <div class="progress_bar_upload blue_arduino stripes">
+              <span style="width: 100%"></span>
+            </div>
+          </li>
+        </ul>
+      </form>
+      </p>
+    </div>
+    <!--
+    <div class="wrapper divide" id="www">
+      <div id="currsketch">
+        <p>Current sketch: <a href="#">sketch title</a></p>
+        <ul id="wwwlist">
+          <li class="folder"><a href="#">folder1</a></li>
+        </ul>
+      </div>
+      <p>Other www folders: </p>
+      <ul id="wwwotherlist">
+        <li class="folder"><a href="#">folder2</a></li>
+        <li class="folder"><a href="#">folder3</a></li>
+        <li class="folder"><a href="#">folder4</a></li>
+        <li class="folder"><a href="#">folder5</a></li>
+      </ul>
+    </div>
+    -->
+    <div class="wrapper footer">
+      This Domino Board runs a version of OpenWrt built on <%= os.date("%b %d, %Y", current_build_date) %>
+    </div>
+  </div>
+  <!-- #content -->
+  <br class="clear"/>
+</div>
+<!-- #container -->
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/zepto.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/webpanel.js"></script>
+</body>
+</html>

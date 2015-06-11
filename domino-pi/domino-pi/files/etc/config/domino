@@ -1,0 +1,15 @@
+
+config domino
+	option board 'pi'
+	option socket_timeout '5'
+	option access_point_wifi_name 'Domino'
+	option wifi_reset_step 'clear'
+	option secure_rest_api 'true'
+
+config wifi-device 'radio0'
+	option channel 'auto'
+	option country '00'
+
+config interface 'lan'
+	option proto 'dhcp'
+
