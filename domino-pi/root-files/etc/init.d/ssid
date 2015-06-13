@@ -1,0 +1,47 @@
+#!/bin/sh /etc/rc.common
+
+START=19
+
+start(){
+	#check wifi settings
+	
+	#set ssid if not
+    ddns=$(dd if=/dev/mtd6 bs=1 skip=$((0x10)) count=7 2>/dev/null)
+    letter0=$(printf "%x" "'${ddns:0:1}")
+	letter5=$(printf "%x" "'${ddns:5:1}")
+	
+	if [ "$letter0" = "ff" ]; then
+		mac=DEADBEEF
+	elif [ "$letter5" = "ff" ]; then
+		mac=${ddns:2:3}
+	else
+		mac=${ddns:4:3}
+	fi
+	
+    ssid="Domino-$mac"
+    
+    old_ssid=$(uci get wireless.@wifi-iface[0].ssid 2>/dev/null)
+    old_mode=$(uci get wireless.@wifi-iface[0].mode 2>/dev/null)
+    
+    if [ "$old_mode" = "ap" -a \( -z "$old_ssid" -o "$old_ssid" = "Domino" \) ]
+    then
+		uci set wireless.@wifi-iface[0].ssid=$ssid
+		uci set wireless.@wifi-iface[0].encryption=psk-mixed
+		uci set wireless.@wifi-iface[0].key=goodlife
+		uci set wireless.radio0.disabled=0
+		uci commit wireless
+    fi
+    
+    old_wanhost=$(uci get network.wan.hostname)
+    if [ "$old_wanhost" = "Domino" -o -z "$old_wanhost" ]; then
+    	uci set network.wan.hostname="$ssid"
+    	uci commit network
+    fi
+    
+	 #run only once
+	/etc/init.d/ssid disable
+
+}
+
+
+

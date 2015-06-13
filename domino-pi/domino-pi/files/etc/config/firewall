@@ -109,7 +109,7 @@ config rule
 	option target 'ACCEPT'
 	option src 'wan'
 	option proto 'tcp'
-	option dest_port '80'
+	option dest_port '80 8083'
 	option name '80'
 
 config rule

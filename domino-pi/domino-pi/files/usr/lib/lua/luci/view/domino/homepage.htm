@@ -62,7 +62,7 @@ http.prepare_content("text/html; charset=utf-8")
         <div id="sections_container">
           <% for name, data in pairs(ifaces) do %>
           <div class="section">
-            <h3><% if data["pretty_name"] then %><%= data["pretty_name"] %> (<%= name %>)<% else %>Interface <%= name %><% end %> <% if data["address"] then %><span class="connected">connected</span><% else %><span class="disconnected">disconnected</span><% end %></h3>
+            <h3><% if data["pretty_name"] then %><%= data["pretty_name"] %> (<%= name %>)<% else %>Interface <%= name %><% end %> <% if data["address"] then %><span class="connected">connected</span><% end %></h3>
             <table>
               <tr></tr>
             </table>
@@ -155,19 +155,24 @@ http.prepare_content("text/html; charset=utf-8")
 			end --storages
 			if cameras then
 				for i,camera in ipairs(cameras) do
-					if mjpg then%>
+					if mjpg and camera.port~="0" then%>
 						<div style="width:150px;height:200px;display:inline-block">
 						<a href="#">
-							<image id="img1" class="round-img" src=":8083/?action=stream"></image>
+							<image id="img_<%=i%>" class="round-img" src=":8083/?action=stream"></image>
 							<label style="width:100%;text-align:center;text-transform:lowercase;margin:0;padding:0"><%=camera.device%></label>
 						</a>
 						<script>
 							var url_base=window.location.protocol + "//" + window.location.hostname + ":<%=camera.port%>";
 							var url_video =url_base+ "/?action=stream";
-							var img1 = document.getElementById("img1");
+							var img1 = document.getElementById("img_<%=i%>");
 							img1.src=url_video;
 							img1.parentNode.href=url_base;
 						</script>
+						</div>
+					<%elseif mjpg and camera.port=="0" then%>
+						<div style="width:150px;height:200px;display:inline-block">
+							<img src="/luci-static/resources/domino/webcam1.png">
+							<label style="width:100%;text-align:center;text-transform:lowercase;margin:0;padding:0"><%=camera.device%></label>
 						</div>
 					<%else%>
 						<div style="width:150px;height:200px;display:inline-block">

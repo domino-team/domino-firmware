@@ -29,5 +29,14 @@ config led
 	option sysfs 'domino:red:wan'
 	option trigger 'netdev'
 	option dev 'eth0'
-	option mode 'tx rx'
 	option default '0'
+	option mode 'link tx rx'
+
+config led
+	option default '0'
+	option name 'lan1'
+	option sysfs 'domino:green:lan1'
+	option trigger 'netdev'
+	option dev 'eth1'
+	option mode 'link tx rx'
+
