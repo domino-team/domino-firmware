@@ -1,0 +1,62 @@
+#!/bin/sh
+
+UCI="/sbin/uci"
+. /lib/functions.sh 
+machine=$(awk '/machine/ {print $3}' /proc/cpuinfo)
+boardname=$(awk -F: '/machine/ {gsub(/^[ \t]+/,"",$2);print tolower($2)}' /proc/cpuinfo)
+
+disable_sta () {
+	local mode
+	config_get mode $1 mode
+	if [ "$mode" = "sta" ]; then
+		uci set wireless."$1".disabled="1"
+	fi 
+}
+
+case $boardname in
+        'chowchow')
+                ID=1
+                ;;
+        *)
+                ID=0
+                ;;
+esac
+
+echo $ID
+
+sleep 1
+config_load wireless
+config_foreach disable_sta wifi-iface 
+
+$UCI "set" "wireless.radio$ID.channel=auto"
+$UCI "set" "wireless.@wifi-iface[$ID].mode=ap"
+#$UCI "set" "wireless.@wifi-iface[$ID].ssid=$machine"
+$UCI "set" "wireless.@wifi-iface[$ID].encryption=psk2"
+$UCI "set" "wireless.@wifi-iface[$ID].key=goodlife"
+$UCI "delete" "wireless.@wifi-iface[$ID].disabled"
+$UCI "delete" "wireless.radio$ID.country"
+
+$UCI "set" "network.lan.ipaddr=192.168.240.1"
+$UCI "set" "network.lan.netmask=255.255.255.0"
+$UCI "set" "network.lan.proto=static"
+$UCI "set" "network.wan.proto=dhcp"
+$UCI "set" "network.wan.ifname=eth0"
+
+#$UCI "set" "wireless.@wifi-iface[1].disabled=1"
+
+PREVIOUS_DNSMASQ_IFACE_LIST=`$UCI get "dhcp.@dnsmasq[0].interface"`
+$UCI del_list "dhcp.@dnsmasq[0].interface=$PREVIOUS_DNSMASQ_IFACE_LIST"
+$UCI add_list "dhcp.@dnsmasq[0].interface=lo,br-lan"
+
+# $UCI "add_list" "dhcp.@dnsmasq[0].address=/#/192.168.240.1"
+
+$UCI commit
+
+# /bin/sed -i "s/#C:192.168/C:192.168/g" /etc/httpd.conf
+
+#/sbin/reboot
+/usr/bin/blink-stop
+/etc/init.d/led start
+/etc/init.d/network restart
+/etc/init.d/firewall restart
+/etc/init.d/dnsmasq restart

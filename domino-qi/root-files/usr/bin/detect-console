@@ -1,0 +1,103 @@
+#!/bin/sh
+
+# detect-console.sh : A simple LininoIO enabler/disabler script
+#
+# Copyright (C) 2014 Dog Hunter AG
+#
+# Author : Arturo Rinaldi
+# E-mail : arturo@doghunter.org
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# v0.14 : fixing consoleboot variable for old u-boot
+#
+# v0.13 : mcuio disable is now redirected to /dev/null ; fixing messages strings
+#
+
+
+
+change_console () {
+
+    #if [ $consoleboot != $consoletab ]
+    if [ $1 != $2 ]
+	then
+        case $1 in
+            'ttySPI0')
+                    sed -i "s/ttyATH0\:\:askfirst/ttySPI0\:\:respawn/g" /etc/inittab
+                    echo "Need to change console settings to ttySPI0" > /dev/kmsg
+                    ;;
+            'ttyATH0')
+                    sed -i "s/ttySPI0\:\:respawn/ttyATH0\:\:askfirst/g" /etc/inittab
+                    echo "Need to change console settings to ttyATH0" > /dev/kmsg
+                    ;;
+        esac
+    else
+        echo "No need to change console settings" > /dev/kmsg
+        exit 0
+    fi
+
+}
+
+rm_spittyplain () {
+
+    FILE="/etc/modules.d/95-spi-tty-plain"
+    if [ -e $FILE ]
+    then
+        rm $FILE
+    fi
+
+}
+
+ins_spittyplain () {
+
+    FILE="/etc/modules.d/95-spi-tty-plain"
+    if [ ! -e $FILE ]
+    then
+        touch $FILE
+        echo "spi-tty-plain" > $FILE
+        chmod 644 $FILE
+    fi
+
+}
+
+# Main
+
+[ ! -e /etc/inittab ] && exit 0
+
+fw_printenv console &>/dev/null
+
+if [ $? -ne 0 ]
+then
+    consoleboot=$(fw_printenv bootargs | sed s/,.*//g | sed s/board.*//g | sed s/^.*console=//g | sed s/\ //g)
+
+else
+
+    # fixed for old u-boot versions
+    consoleboot=$(fw_printenv console | sed s/,.*//g | sed s/board.*//g | sed s/^.*console=//g | sed s/\ //g)
+
+fi
+
+if [ $consoleboot = "spicons" ]
+then
+    consoleboot="ttySPI0"
+    /etc/init.d/mcuio enable>/dev/null
+	ins_spittyplain
+else
+	/etc/init.d/mcuio disable>/dev/null
+	rm_spittyplain
+fi
+
+consoletab=$(cat /etc/inittab | tail -n1 | sed s/:.*//g | sed s/,.*//g)
+
+change_console $consoleboot $consoletab

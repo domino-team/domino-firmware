@@ -1,0 +1,7 @@
+
+config samba
+	option workgroup 'WORKGROUP'
+	option description 'Domino Qi'
+	option homes '1'
+	option name 'Domino'
+

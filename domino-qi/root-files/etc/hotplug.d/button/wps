@@ -1,0 +1,9 @@
+#!/bin/sh
+[ "$BUTTON" = "wps" ] && {
+        if [ "$ACTION" = "pressed" ]; then
+                /usr/bin/wifi-reset-button-pressed
+        elif [ "$ACTION" = "released" ]; then
+                /usr/bin/wifi-reset-button-released
+                /etc/init.d/led start
+        fi
+}

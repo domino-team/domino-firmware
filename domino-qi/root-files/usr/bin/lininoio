@@ -1,0 +1,514 @@
+#!/bin/sh
+#
+# lininoio.sh : A simple LininoIO enabler/disabler script
+#
+# Copyright (C) 2014 Dog Hunter AG
+#
+# Author : Arturo Rinaldi
+# E-mail : arturo@doghunter.org
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# v5.24 : commenting out initial sed of io args
+#
+# v5.23 : mcuio enable/disable is now redirected to /dev/null
+#
+# v5.22 : introducing detect-console script in boot options
+#
+# v5.21 : fixing uboot environment arguments
+#
+# v5.19 : adding support for Yun Mini board
+#
+# v5.18 : serial console
+#
+# v5.17 : Reverting ChowChow serial console to /dev/ttyATH0
+#
+# v5.15 : bugfixing, support for ChowChow
+#
+# v5.3 : added support for chowchow board
+
+
+
+# Check for ssh connection
+
+sshcheck () {
+
+	if [ ! `ps | grep -i [d]ropbear | wc -l` -ge 2 ]
+	then
+		echo ""
+		echo "Please connect to your board by means of ssh before running this script ! Terminating..."
+		echo ""
+
+		exit 0
+	else
+		echo ""
+		echo "WARNING ! Please be sure to run lininoio when connected by means of SSH to your board, otherwise you could damage your board !"
+		echo ""
+
+		read -p "Do you want to proceed ? [y/n] " yn_ssh
+
+		case $yn_ssh in
+			[Yy]*)
+				clear
+				;;
+			[Nn]*)
+
+				echo ""
+				echo "Terminating the script for now..."
+				echo""
+
+				exit 0
+				;;
+		esac
+	fi
+
+}
+
+# Old U-Boot
+
+bootargs_stop_complete () {
+	fw_setenv bootargs 'console=ttyATH0,115200 board=domino root=31:03 rootfstype=squashfs,jffs2 noinitrd mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env),1280k(kernel),14656k(rootfs),64k(nvram),64k(art)ro,15936k@0x50000(firmware)'
+	fw_setenv baudrate 115200
+}
+
+bootargs_start_complete () {
+	fw_setenv bootargs 'console=spicons,250000 board=domino root=31:03 rootfstype=squashfs,jffs2 noinitrd mtdparts=spi0.0:256k(u-boot),64k(u-boot-env),1280k(kernel),14656k(rootfs),64k(nvram),64k(art)ro,15936k@0x50000(firmware)'
+	fw_setenv baudrate 250000
+}
+
+# New U-boot
+
+bootargs_stop_simple () {
+
+	fw_setenv console 'ttyATH0,250000'
+
+}
+
+bootargs_start_simple () {
+
+	fw_setenv console 'spicons'
+
+}
+
+# start io_settings
+
+iosettings_start () {
+
+	fw_printenv console &>/dev/null
+
+	if [ $? -ne 0 ]
+	then
+	 	bootargs_start_complete
+	else
+		bootargs_start_simple
+	fi
+
+}
+
+# stop io_settings
+
+iosettings_stop () {
+
+	fw_printenv console &>/dev/null
+
+	if [ $? -ne 0 ]
+	then
+	 	bootargs_stop_complete
+	else
+		bootargs_stop_simple
+	fi
+
+}
+
+statusio () {
+
+	if [ -d /sys/class/gpio/gpiochip100 ] && `cat /etc/inittab | grep -qs SPI0`
+	then
+		echo ""
+		echo "STATUS : ENABLED"
+		echo ""
+	else
+		echo ""
+		echo "STATUS : DISABLED"
+		echo ""
+	fi
+
+	exit 0
+}
+
+versionio () {
+
+	if [ -e /etc/linino_version ]
+	then
+			cat /etc/linino_version | sed -e /RELEASE/d | sed -e /CODENAME/d | sed -e /TARGET/d
+
+			exit 0
+	else
+			echo ""
+			echo "linino_version not on the system ! Aborting !"
+			echo ""
+
+			exit 0
+	fi
+
+}
+
+helpio () {
+
+	echo ""
+	echo "USAGE : lininoio <-f> <start/stop> - enables/disable the LininoIO features with the optional \`force\` switch"
+	echo "	lininoio -v : prints out the versioning details of the LininoIO operating system"
+	echo "	lininoio -s : shows the current status of the LininoIO features (ENABLED/DISABLED)"
+	echo "	lininoio -h : prints out this HELP"
+	echo ""
+
+	exit 0
+
+}
+
+# Asks for rebooting after the LininoIO modifications have been made
+
+reboot_io () {
+
+	if [ $1 = 'start' ]
+	then
+
+		word='enable'
+
+	elif [ $1 = 'stop' ]
+	then
+
+		word='disable'
+
+ 	fi
+
+	t=1
+
+	while [ $t != 0 ]
+	do
+
+		echo ""
+		read -p "To fully "$word" the LininoIO features you must reboot your system. Reboot now ? [y/n] " yn1
+		echo ""
+
+		case $yn1 in
+			[Yy]*)
+
+				echo ""
+				echo "Rebooting..."
+				echo ""
+
+				reboot && exit
+
+				t=0
+
+				;;
+
+			[Nn]*)
+
+				echo ""
+				echo "Terminating for now, remember to reboot your system later..."
+				echo ""
+
+				exit 0
+
+				t=0
+
+				;;
+
+			*)
+
+				echo ""
+				echo "You have to make a choice !"
+				echo ""
+
+				sleep 1
+
+				clear
+
+				;;
+		esac
+
+	done
+}
+
+# Detects if "mcuio" service is up and running or not
+
+mcuio_ok () {
+
+	if [ -d /sys/class/gpio/gpiochip100 ] && `cat /etc/inittab | grep -qs SPI0`
+	then
+
+		echo ""
+		echo "LininoIO is currently up and running or you simply have to reboot your board to enable it !"
+		echo ""
+
+		exit 0
+
+	fi
+
+}
+
+mcuio_ko () {
+
+	if [ ! -d /sys/class/gpio/gpiochip100 ] && `cat /etc/inittab | grep -qs ATH0`
+	then
+
+		echo ""
+		echo "LininoIO is currently disabled....nothing to revert ! You maybe need to reboot your board now...."
+		echo ""
+
+		exit 0
+
+	fi
+
+}
+
+# Detects if the board is supported or not
+
+boardname=$(awk -F: '/machine/ {gsub(/^[ \t]+/,"",$2);print tolower($2)}' /proc/cpuinfo)
+if [ "$boardname" = "domino qi" ]; then
+	boardname="yun"
+fi
+
+if [ $boardname ]
+then
+
+	case $boardname in
+			'yun')
+					FILE="YunSerialTerminal.hex"
+				;;
+			'yun-mini')
+					FILE="YunMiniSerialTerminal.hex"
+				;;
+			'one')
+					FILE="LininoOneSerialTerminal.hex"
+				;;
+			'chowchow')
+					FILE="ChowChowSerialTerminal.hex"
+				;;
+
+			*)
+
+				echo ""
+				echo "You board is not supported ! Terminating the script..."
+				echo ""
+
+				exit 0
+
+				;;
+	esac
+
+else
+
+	echo ""
+	echo "Board not detected ! ! !"
+	echo ""
+
+	exit 0
+
+fi
+
+# First check from CLI
+
+case $1 in
+
+	'-s')
+			statusio
+			;;
+
+	'-h')
+			helpio
+			;;
+
+	'-v')
+			versionio
+			;;
+
+		'')
+			echo ""
+			echo "Invalid choice ! Please run \`lininoio -h\` to set a valid option !"
+			echo ""
+
+			exit 0
+			;;
+
+esac
+
+# Main
+
+force=$1
+
+# Shift argument if $1 is -f
+
+if [ $1 = '-f' ]
+then
+
+	shift 1
+
+fi
+
+if [ -e /etc/linino/bathos-$boardname.hex ]
+then
+
+	case $1 in
+			'start')
+
+				case $force in
+					'-f')
+						;;
+					*)
+						mcuio_ok
+						;;
+				esac
+
+				# Detects active SSH connection
+
+				sshcheck
+
+				p=1
+
+				while [ $p != 0 ]
+				do
+
+					echo ""
+					read -p "Do you want to enable the LininoIO OS features ? [y/n] " yn
+					echo ""
+
+					case $yn in
+						[Yy]*)
+
+							iosettings_start
+
+							# sed -i "s/ttyATH0\:\:askfirst/ttySPI0\:\:respawn/g" /etc/inittab
+							run-avrdude /etc/linino/bathos-$boardname.hex
+							/etc/init.d/mcuio enable &>/dev/null
+							# Check if spi-tty module is enabled
+							/usr/bin/detect-console
+
+							# echo "Rebooting..."
+							# reboot && exit
+
+							reboot_io $1
+
+							p=0
+
+							;;
+
+						[Nn]*)
+
+							echo ""
+							echo "Terminating the script..."
+							echo ""
+
+							exit 0
+
+							p=0
+
+							;;
+						*)
+
+							echo ""
+							echo "You have to make a choice !"
+							echo ""
+
+							;;
+					esac
+				done
+
+				;;
+
+			'stop')
+
+				case $force in
+					'-f')
+						;;
+					*)
+						mcuio_ko
+						;;
+				esac
+
+				# Detects active SSH connection
+
+				sshcheck
+
+				q=1
+
+				while [ $q != 0 ]
+				do
+
+					echo ""
+					read -p "Do you want to disable the LininoIO OS features ? [y/n] " yn
+					echo ""
+
+					case $yn in
+						[Yy]*)
+
+							iosettings_stop
+
+							# sed -i "s/ttySPI0\:\:respawn/ttyATH0\:\:askfirst/g" /etc/inittab
+							/etc/init.d/mcuio disable &>/dev/null
+							run-avrdude /etc/linino/$FILE
+							# Check if spi-tty module is enabled
+							/usr/bin/detect-console
+
+							# echo "Rebooting..."
+							# reboot && exit
+
+							reboot_io $1
+
+							q=0
+
+							;;
+
+						[Nn]*)
+
+							echo ""
+							echo "Terminating the script..."
+							echo ""
+
+							exit 0
+
+							q=0
+
+							;;
+
+						*)
+
+							echo ""
+							echo "You have to make a choice !"
+							echo ""
+
+							;;
+
+					esac
+				done
+
+				;;
+
+			*)
+				echo ""
+				echo "Invalid choice ! Please run \`lininoio -h\` to set a valid option !"
+				echo ""
+
+				exit 0
+				;;
+
+	esac
+
+else
+	echo ""
+	echo "Firmware HEX not residing on the board ! Aborting !"
+	echo ""
+fi
