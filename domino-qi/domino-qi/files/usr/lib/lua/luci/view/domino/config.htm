@@ -1,0 +1,212 @@
+<%
+local http = require("luci.http")
+http.prepare_content("text/html; charset=utf-8")
+-%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+ This file is part of YunWebUI.
+
+ YunWebUI is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+ As a special exception, you may use this file as part of a free software
+ library without restriction.  Specifically, if other files instantiate
+ templates or use macros or inline functions from this file, or you compile
+ this file and link it with other files to produce an executable, this
+ file does not by itself cause the resulting executable to be covered by
+ the GNU General Public License.  This exception does not however
+ invalidate any other reasons why the executable file might be covered by
+ the GNU General Public License.
+
+ Copyright 2013 Arduino LLC (http://www.arduino.cc/)
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+  <link rel="stylesheet" type="text/css" href="<%= resource %>/domino/style.css" />
+  <title>Domino</title>
+</head>
+<body>
+<div id="container">
+  <div id="header">
+    <div class="wrapper">
+      <h1>Domino</h1>
+      <div id="logo"><a href="<%= pcdata(controller .. '/webpanel') %>"><img src="<%= resource %>/domino/logo.png" alt="domino"/></a></div>
+      <div id="logophone"><a href="<%= pcdata(controller .. '/webpanel') %>"><img src="<%= resource %>/domino/logo_phone.png" alt="domino"/></a></div>
+	  <form method="get" action="<%= pcdata(controller .. '/webpanel/config') %>">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="System" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/config') %>');">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Network" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/network') %>');">
+		  <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Luci" onclick="javascript:return goto('<%= pcdata(controller .. '/') %>');">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Editor" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/files') %>');">
+       </form>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper" >
+      <form id="form1" name="form1" method="post" onreset="javascript:formReset(this);" onsubmit="javascript:return basicCheck(this) && send_post('<%=pcdata(controller .. "/webpanel/config")%>', this, 'real_form', 'hostname', 'zonename', 'password');" action="#">
+
+        <div id="error_response" class="hidden">
+          <p class="alert">An error has occurred.</p>
+        </div>
+        <ul>
+          <li>
+            <label class="title">Board configuration </label>
+          </li>
+          <li>
+            <label class="desc" for="hostname">
+              Board name <span class="req">*</span>
+            </label>
+
+            <div class="input_container">
+              <input id="hostname" name="hostname" type="text" value="<%= hostname %>" maxlength="255">
+            </div>
+          </li>
+
+          <li>
+            <label class="desc" for="password">
+              Password
+            </label>
+
+            <div class="input_container">
+              <input id="password" name="password" type="password" maxlength="255">
+            </div>
+          </li>
+          <li>
+            <label class="desc" for="confpassword">
+              Confirm Password
+            </label>
+
+            <div class="input_container">
+              <input id="confpassword" name="confpassword" type="password" maxlength="255">
+              <p id="pass_mismatch" class="hidden error_container input_message">Password mismatch</p>
+            </div>
+          </li>
+
+          <li>
+            <label class="desc" for="zonename">
+              Timezone <span class="req">*</span>
+            </label>
+
+            <div class="input_container">
+              <select id="zonename" name="zonename">
+                <% for k, tz in ipairs(timezones_wifi_reg_domains) do %>
+                <option value="<%= tz["label"] %>"
+                <%if zonename == tz["label"] then %>
+                selected="selected"
+                <% end %>
+                ><%= tz["label"] %></option>
+                <% end %>
+              </select>
+            </div>
+          </li>
+        </ul>
+    </div>
+
+    <div class="wrapper divide">
+      <div class="input_container">
+        <input id="discard" class="btTxt submit saveForm btn" type="reset" value="Discard">
+        <input id="conf_rest_btn" class="btTxt submit saveForm" type="submit" value="Save &amp; Reboot">
+      </div>
+
+      </form>
+
+      <form id="real_form" name="real_form" method="post" action="<%=pcdata(controller .. "/webpanel/config")%>">
+        <input type="hidden" name="pgp_message" value=""/>
+      </form>
+    </div>
+
+       <div class="wrapper divide">
+      <ul>
+        <li>
+          <label class="title">Firmware Upgrade</label>
+        </li>
+
+        <li style="display:none">
+          <label for="auto_update" class="left">Auto Update</label>
+		  <div class="input_container checkbox_container"><input disabled type="checkbox" name="auto_update" id="auto_update"/></div>
+        </li>
+
+         <li>
+            <label class="desc" for="detected_wifis">Current version</label>
+            <div class="input_container" >
+				<input style="width:100px" type="text" disabled value="<%=firmware_version%>">
+            </div>
+          </li>
+
+          <li>
+            <label class="desc" for="">Newest version</label>
+
+            <div class="input_container">
+				<input style="width:100px" id="firmware_new" name="firmware_new" type="text" disabled value="">
+				<input id="download_firmware" name="download_firmware" type="button" style="width:100px;background:#59C367;display:none" value="Download" onclick="download_firmware();">
+            </div>
+          </li>
+        
+          <li>
+        <form method="post" id="form_firmware" name="form_firmware" action="<%= pcdata(controller .. '/webpanel/upload_firmware') %>" enctype="multipart/form-data">
+		  	<label class="desc left" for="">Upload firmware</label>
+            <div class="input_container">
+              <input id="firmware" name="firmware" type="file" onchange="fileSelected();">
+            </div>
+        </form>
+          </li>
+		   
+		   <li id="progress_bar_upload" style="display:none">
+            <div class="progress_bar_upload blue_arduino stripes">
+              <span style="width: 1%"></span>
+            </div>
+          </li>
+		  <li >
+
+			<div style="text-align:center" id="upload_info"></div>
+		  </li>
+		  <div id="upgrade_bar" style="display:none">
+			<form id="form_upgrade" name="form_upgrade" action="<%= pcdata(controller .. '/webpanel/upgrade_firmware') %>">
+			  <li style="height:55px">
+				<label class="desc left" for="keep">Keep Settings</label>
+				<div class="input_container checkbox_container">
+				  <input type="checkbox" name="keep" id="keep" value="1">
+				</div><label style="text-align:left" for="keep">Important: Uncheck this will erase all your contents</label>
+			</li>
+			  <li>
+				<div class="input_container">
+				  <input id="upload_button" class="btTxt submit saveForm" type="submit" name="button" value="Upgrade">
+				</div>
+			  </li>
+			 </form>
+		  </div>
+		  <div style="text-align:center">
+			<div style="display:inline-block;text-align:left">
+			 
+			</div>
+		</div>
+      </ul>
+
+    </div>
+  </div>
+  <!-- #content -->
+  <br class="clear"/>
+</div>
+<!-- #container -->
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/gpg.ugly.js"></script>
+<script language="javascript">
+	var pub_key = "<%= pub_key %>";
+	var check_url="<%= pcdata(controller .. '/webpanel/get_firmware_online')%>";
+	var downloading_url="<%= pcdata(controller .. '/webpanel/download_firmware_online')%>";
+</script>
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/zepto.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/webpanel.js"></script>
+</body>
+</html>

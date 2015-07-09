@@ -1,0 +1,350 @@
+<%
+local http = require("luci.http")
+http.prepare_content("text/html; charset=utf-8")
+-%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+ This file is part of YunWebUI.
+
+ YunWebUI is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+ As a special exception, you may use this file as part of a free software
+ library without restriction.  Specifically, if other files instantiate
+ templates or use macros or inline functions from this file, or you compile
+ this file and link it with other files to produce an executable, this
+ file does not by itself cause the resulting executable to be covered by
+ the GNU General Public License.  This exception does not however
+ invalidate any other reasons why the executable file might be covered by
+ the GNU General Public License.
+
+ Copyright 2013 Arduino LLC (http://www.arduino.cc/)
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+  <link rel="stylesheet" type="text/css" href="<%= resource %>/domino/style.css" />
+  <title>Domino</title>
+</head>
+<body>
+<div id="container">
+  <div id="header">
+    <div class="wrapper">
+      <h1>Domino</h1>
+      <div id="logo"><a href="<%= pcdata(controller .. '/webpanel') %>"><img src="<%= resource %>/domino/logo.png" alt="domino"/></a></div>
+      <div id="logophone"><a href="<%= pcdata(controller .. '/webpanel') %>"><img src="<%= resource %>/domino/logo_phone.png" alt="domino"/></a></div>
+	  <form method="get" action="<%= pcdata(controller .. '/webpanel/config') %>">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="System" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/config') %>');">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Network" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/network') %>');">
+		  <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Luci" onclick="javascript:return goto('<%= pcdata(controller .. '/') %>');">
+          <input class="btTxt submit saveForm" style="display:inline-block; width:46%;margin-top:2px;" type="submit" value="Editor" onclick="javascript:return goto('<%= pcdata(controller .. '/webpanel/files') %>');">
+       </form>
+    </div>
+  </div>
+  <div id="content">
+    <div class="wrapper divide">
+      <form id="form1" name="form1" method="post" onreset="javascript:formReset(this);" onsubmit="javascript:return networkCheck(this) && send_post('<%=pcdata(controller .. "/webpanel/network")%>', this, 'real_form','wan_protocol');" action="#">
+
+        <div id="error_response" class="hidden">
+          <p class="alert">An error has occurred.</p>
+        </div>
+        <ul>
+          <li>
+            <label class="title">Internet Configuration </label>
+          </li>
+          <li>
+            <label class="desc" for="hostname">
+              Protocol <span class="req">*</span>
+            </label>
+			<%protocol=wan["protocol"]
+			%>
+            <div class="input_container"> 
+              <select name="wan_protocol" id="wan_protocol">
+				<option value="dhcp" <%if protocol=="dhcp" then luci.http.write("selected") end%>>DHCP</option>
+				<option value="static" <%if protocol=="static" then luci.http.write("selected") end%>>Static</option>
+				<option value="pppoe" <%if protocol=="pppoe" then luci.http.write("selected") end%>>PPPoE</option>
+				<option value="3g" <%if protocol=="3g" then luci.http.write("selected") end%>>3G</option>
+				<option value="usb" <%if protocol=="usb" then luci.http.write("selected") end%>>Tethering</option>
+				<option value="wifi" <%if protocol=="wifi" then luci.http.write("selected") end%>>WiFi</option>
+              </select>
+            </div>
+          </li>
+          
+          <li style="display:<%if protocol ~= "static" then luci.http.write("none") end%>">
+            <label class="desc" for="ipaddr">
+              IP Address
+            </label>
+            <div class="input_container">
+              <input id="ipaddr" name="ipaddr" type="text" maxlength="255" pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$" value="<%=wan.ipaddr%>">
+              <p id="ipaddr_wrong" class="hidden error_container input_message">Format wrong</p>
+            </div>
+          </li>
+
+          <li style="display:<%if protocol ~= "static" then luci.http.write("none") end%>">
+            <label class="desc" for="netmask">
+              Netmask
+            </label>
+            <div class="input_container">
+              <input id="netmask" name="netmask" type="text" maxlength="255" pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"  value="<%=wan.netmask%>">
+              <p id="netmask_wrong" class="hidden error_container input_message">Format wrong</p>
+            </div>
+          </li>
+          <li style="display:<%if protocol ~= "static" then luci.http.write("none") end%>">
+            <label class="desc" for="gateway">
+              Gateway
+            </label>
+            <div class="input_container">
+              <input id="gateway" name="gateway" type="text" maxlength="255" pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"  value="<%=wan.gateway%>">
+              <p id="gateway_wrong" class="hidden error_container input_message">Format wrong</p>
+            </div>
+          </li>
+		  <li style="display:<%if protocol ~= "static" then luci.http.write("none") end%>" >
+            <label class="desc" for="dns">
+              DNS
+            </label>
+            <div class="input_container">
+              <input id="dns" name="dns" type="text" maxlength="255"  value="<%=wan.dns%>">
+              <p id="dnas_wrong" class="hidden error_container input_message">Format wrong</p>
+            </div>
+          </li>
+          
+           <li style="display:<%if protocol ~= "3g" then luci.http.write("none") end%>">
+            <label class="desc" for="modem">
+              Modem Device
+            </label>
+
+            <div class="input_container">
+              <select id="modem" name="modem">
+				<% 
+				modems=wan["modems"];
+				local i=0
+				for device in modems do 
+					i=i+1
+				%>
+				 <option value="<%=device%>" <%if wan.device==device then luci.http.write("selected") end%>><%=device%></option>
+				<% end
+				if (i==0) then
+				%>
+					<option value="0">No modems</option>
+				<%
+				end
+				 %>
+              </select>
+            </div>
+          </li>
+		  
+          <li style="display:<%if protocol ~= "3g" then luci.http.write("none") end%>">
+            <label class="desc" for="service">
+              Service Type
+            </label>
+
+            <div class="input_container">
+              <select id="service" name="service">
+				<option value="umts" <%if wan.service=="umts" then luci.http.write("selected") end%>>UMTS/GPRS (W-CDMA)</option>
+				<option value="evdo" <%if wan.service=="evdo" then luci.http.write("selected") end%>>CDMA/EVDO (CDMA2000)</option>
+              </select>
+            </div>
+          </li>
+          <li style="display:<%if protocol ~= "3g" then luci.http.write("none") end%>">
+            <label class="desc" for="apn">
+              APN
+            </label>
+
+            <div class="input_container">
+              <input id="apn" name="apn" type="text" maxlength="255"  value="<%=wan.apn%>">
+            </div>
+          </li>
+          <li style="display:<%if protocol ~= "3g" then luci.http.write("none") end%>">
+            <label class="desc" for="pin">
+              Pin
+            </label>
+
+            <div class="input_container">
+              <input id="pin" name="pin" type="text" maxlength="255"  value="<%=wan.pin%>">
+            </div>
+          </li>
+          <li style="display:<%if protocol ~= "usb" then luci.http.write("none") end%>">
+            <label class="desc" for="phone">
+              Phone Device
+            </label>
+
+            <div class="input_container">
+               <select id="phone" name="phone">
+				<% 
+				local device=wan.usb
+				if device and device~="" then
+				%>
+				 <option value="<%=device%>" <%if wan.device==device then luci.http.write("selected") end%>><%=device%></option>
+				<% 
+				else
+				%>
+					<option value="0">No devices</option>
+				<%
+				end
+				%>
+              </select>
+            </div>
+          </li>
+           <li style="display:<%if (protocol ~= "3g" and protocol ~= "pppoe") then luci.http.write("none") end%>">
+            <label class="desc" for="username">
+              Username
+            </label>
+
+            <div class="input_container">
+              <input id="username" name="username" type="text" maxlength="255" value="<%=wan.username%>">
+            </div>
+          </li>
+            <li style="display:<%if (protocol ~= "3g" and protocol ~= "pppoe") then luci.http.write("none") end%>">
+            <label class="desc" for="password">
+              Password
+            </label>
+
+            <div class="input_container">
+              <input id="password" name="password" type="password" maxlength="255"  value="<%=wan.password%>">
+            </div>
+          </li>
+          
+         <div id="wifi_container" class="" style="display:<%if protocol ~= "wifi" then luci.http.write("none") end%>">
+          <li>
+            <label class="desc" for="detected_wifis">Detected wireless networks</label>
+
+            <div class="input_container">
+              <select id="detected_wifis" name="wifi_detected"></select>
+              <a id="refresh_detected_wifis" href="#">Refresh</a>
+            </div>
+          </li>
+
+          <li>
+            <label class="desc" for="wifi_ssid">Wireless name <span class="req">*</span></label>
+
+            <div class="input_container">
+              <input id="wifi_ssid" name="wifi_ssid" type="text" value="<%=wan.ssid%>" maxlength="255">
+            </div>
+          </li>
+
+          <li>
+            <label class="desc left" for="wifi_encryption">Security</label>
+            <div class="input_container">
+              <select id="wifi_encryption" name="wifi_encryption">
+               <% for k, encryption in ipairs(encryptions) do %>
+                <option value="<%= encryption["code"] %>"
+                <% if wan["encryption"] == encryption["code"] then %>
+                selected="selected"
+                <% end %>
+                ><%= encryption["label"] %></option>
+                <% end %>
+              </select>
+            </div>
+          </li>
+          <li id="wifi_password_container">
+            <label class="desc" for="wifi_password">Password <span id="req_3" class="req">*</span></label>
+            <div class="input_container">
+              <input id="wifi_password" name="wifi_password" type="password" value="<%=wan.key%>" maxlength="63">
+            </div>
+          </li>
+        </div>
+        
+        </ul>
+    </div>
+    <div class="wrapper divide">
+      <ul>
+        <li>
+          <label class="title">Wireless parameters </label>
+        </li>
+
+        <li>
+          <label for="ap_enable" class="left">Enabled</label>
+		  <div class="input_container checkbox_container">
+			<input type="checkbox" name="ap_enable" id="ap_enable" <%if wifi.enabled then write("checked") end%>>
+		</div>
+        </li>
+
+		 <div id="ap_container" class="" style="clear:both">
+			  <li>
+				<label class="desc" for="ap_ssid">Wireless name <span class="req">*</span></label>
+
+				<div class="input_container">
+				  <input id="ap_ssid" name="ap_ssid" type="text" maxlength="255" value="<%=wifi.ssid%>">
+				</div>
+			  </li>
+
+			  <li>
+				<label class="desc left" for="ap_encryption">Security</label>
+				<div class="input_container">
+				  <select id="ap_encryption" name="ap_encryption">
+				   <% for k, encryption in ipairs(encryptions) do %>
+					<option value="<%= encryption["code"] %>"
+					<% if wifi["encryption"] == encryption["code"] then %>
+					selected="selected"
+					<% end %>
+					><%= encryption["label"] %></option>
+					<% end %>
+				  </select>
+				</div>
+			  </li>
+			  <li id="wifi_password_container">
+				<label class="desc" for="ap_password">Password <span id="req_3" class="req">*</span></label>
+				<div class="input_container">
+				  <input id="ap_password" name="ap_password" type="password" maxlength="63" value="<%=wifi.password%>">
+				</div>
+			  </li>
+			</div>
+    
+      </ul>
+    </div>
+    <div class="wrapper divide">
+      <ul>
+        <li>
+          <label class="title">LAN </label>
+        </li>
+
+        <li>
+          <label for="lan_ip" class="left">LAN IP Address</label>
+		  <div class="input_container">
+           <input id="lan_ip" name="lan_ip" type="text" required pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$" value="<%=lan["ipaddr"]%>" maxlength="255">
+		  </div>
+        </li>
+
+      </ul>
+
+    </div>
+    <div class="wrapper divide">
+      <div class="input_container">
+        <input id="discard" class="btTxt submit saveForm btn" type="reset" value="Discard">
+        <input id="conf_rest_btn" class="btTxt submit saveForm" type="submit" value="Save &amp; Apply">
+      </div>
+
+      </form>
+
+      <form id="real_form" name="real_form" method="post" action="<%=pcdata(controller .. "/webpanel/network")%>">
+        <input type="hidden" name="pgp_message" value=""/>
+      </form>
+    </div>
+
+
+  </div>
+  <!-- #content -->
+  <br class="clear"/>
+</div>
+<!-- #container -->
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/gpg.ugly.js"></script>
+<script language="javascript">
+  var pub_key = "<%= pub_key %>";
+  var refresh_wifi_url = "<%=pcdata(controller .. "/webpanel/wifi_detect")%>";
+</script>
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/zepto.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="<%= resource %>/domino/webpanel.js"></script>
+</body>
+</html>

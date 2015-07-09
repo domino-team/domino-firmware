@@ -1,0 +1,9 @@
+%echo Generating a standard key
+Key-Type: RSA
+Name-Real: Domino IO
+Name-Email: support@domino.io
+%pubring /etc/domino/domino_gpg.pub
+%secring /etc/domino/domino_gpg.sec
+# Do a commit here, so that we can later print "done" :-)
+%commit
+%echo done
