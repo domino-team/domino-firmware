@@ -7,7 +7,7 @@ boot () {
 	if [ -e /etc/avahi/services/http.service ]
 	then
 	
-	      boardname=$(awk '/machine/ {print tolower($4)}' /proc/cpuinfo)
+	      boardname=$(awk -F: '/machine/ {gsub(/^[ \t]+/,"",$2);print tolower($2)}' /proc/cpuinfo)
 	      boardorig=$(awk '/board=\$board/ {print $1}' /etc/avahi/services/http.service)
 	      
 	      if [ $boardorig ]

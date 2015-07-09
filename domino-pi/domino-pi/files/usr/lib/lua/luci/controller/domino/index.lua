@@ -957,6 +957,7 @@ function join_wifi(uci,ssid, encryption, password)
 		end
 		
 		uci:set("wireless","sta","network","wan")
+		uci:set("wireless","sta","disabled","0")
 		uci:delete("network","wan","ifname")
 		uci:set("network","wan","proto","dhcp")
 		--uci:section("network","network","wwan")

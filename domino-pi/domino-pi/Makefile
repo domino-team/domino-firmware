@@ -30,7 +30,7 @@ define Package/domino-pi
    +comgt +chat\
    +luci +luci-i18n-english +luci-lib-json +luci-lib-nixio \
    +rng-tools +uhttpd-mod-lua +uhttpd-mod-tls +uhttpd-mod-ubus \
-   +usbutils +wget \
+   +usbutils +wget +mjpg-streamer\
    +kmod-video-core +kmod-video-uvc +kmod-video-gspca-core +kmod-video-gspca-zc3xx +kmod-video-gspca-sonixb ++kmod-video-gspca-sonixj \
    +@BUSYBOX_CUSTOM +@BUSYBOX_CONFIG_UNICODE_SUPPORT \
    +@BUSYBOX_CONFIG_UNICODE_COMBINING_WCHARS +@BUSYBOX_CONFIG_UNICODE_WIDE_WCHARS +@BUSYBOX_CONFIG_UNICODE_BIDI_SUPPORT +@BUSYBOX_CONFIG_UNICODE_NEUTRAL_TABLE +@BUSYBOX_CONFIG_UNICODE_PRESERVE_BROKEN  \
