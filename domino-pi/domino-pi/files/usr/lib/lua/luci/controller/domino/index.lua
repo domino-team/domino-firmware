@@ -1075,10 +1075,23 @@ function network_post()
 		uci:set("wireless",ap_name,"disabled",'0')
 		uci:set("wireless","radio0","disabled",'0')
 		uci:set("wireless",ap_name,"ssid",params["ap_ssid"])
-		if not_nil_or_empty(params["ap_password"]) then
-			uci:set("wireless",ap_name,"key",params["ap_password"])
-		end
 		uci:set("wireless",ap_name,"encryption",params["ap_encryption"])
+		if params["ap_encryption"] == "wep" then
+	        uci:set("wireless",ap_name,"key",'1')
+	        if not_nil_or_empty(params["ap_password"]) then
+		        uci:set("wireless",ap_name,"key1",params["ap_password"])
+	    	end
+	    elseif params["ap_encryption"] == "none" then
+	        uci:delete("wireless",ap_name, "key")
+	        uci:delete("wireless",ap_name, "key1")
+	    else
+	        uci:delete("wireless",ap_name, "key1")
+	        if not_nil_or_empty(params["ap_password"]) then
+	            uci:set("wireless",ap_name,"key",params["ap_password"])
+	        end
+	    end
+		
+
 	else
 		uci:set("wireless",ap_name,"disabled",'1')
 	end

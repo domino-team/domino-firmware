@@ -251,7 +251,7 @@ http.prepare_content("text/html; charset=utf-8")
           <li id="wifi_password_container">
             <label class="desc" for="wifi_password">Password <span id="req_3" class="req">*</span></label>
             <div class="input_container">
-              <input id="wifi_password" name="wifi_password" type="password" value="<%=wan.key%>" maxlength="63">
+              <input id="wifi_password" name="wifi_password" placeholder="Keep Unchanged" type="password" maxlength="63">
             </div>
           </li>
         </div>
@@ -283,7 +283,7 @@ http.prepare_content("text/html; charset=utf-8")
 			  <li>
 				<label class="desc left" for="ap_encryption">Security</label>
 				<div class="input_container">
-				  <select id="ap_encryption" name="ap_encryption">
+				  <select id="ap_encryption" name="ap_encryption" onchange="ap_encryption_changed(this.form);">
 				   <% for k, encryption in ipairs(encryptions) do %>
 					<option value="<%= encryption["code"] %>"
 					<% if wifi["encryption"] == encryption["code"] then %>
@@ -297,7 +297,7 @@ http.prepare_content("text/html; charset=utf-8")
 			  <li id="wifi_password_container">
 				<label class="desc" for="ap_password">Password <span id="req_3" class="req">*</span></label>
 				<div class="input_container">
-				  <input id="ap_password" name="ap_password" type="password" maxlength="63" value="<%=wifi.password%>">
+				  <input id="ap_password" name="ap_password" type="password" maxlength="63" placeholder="Keep Unchanged">
 				</div>
 			  </li>
 			</div>

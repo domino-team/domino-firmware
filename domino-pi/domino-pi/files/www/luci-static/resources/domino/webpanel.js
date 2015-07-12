@@ -46,6 +46,18 @@ $.fn.serializeObject = function()
     return o;
 };
 
+function ap_encryption_changed(form){
+    var ap_encryption = form["ap_encryption"];
+	var ap_password = form["ap_password"];
+	if(ap_encryption.value=="none"){
+	    ap_password.placeholder="";
+	}else if(ap_encryption.value=="wep"){
+	    ap_password.placeholder="Length should be 5 or 13 characters";
+	}else{
+	    ap_password.placeholder="Minimum 8 characters";
+	}
+}
+
 function networkCheck(form) {
 	var wan_protocol=form["wan_protocol"].value;
 	
@@ -138,6 +150,21 @@ function networkCheck(form) {
 	  }
 	}
 	
+	if(nullOrEmpty(ap_ssid.value)){
+	    errorHandler(ap_ssid, errContainer, "SSID required");
+	    errors = true;
+	}
+	if(ap_encryption.value=="wep"){
+	    if(ap_password.value.length != 13 && ap_password.value.length !=5){
+	        errorHandler(ap_password, errContainer, "WiFi password must be 5 or 13 characters");
+	        errors = true;
+	    }
+	}else if(ap_encryption.value !="none"){
+	    if(ap_password.value.length <8){
+	        errorHandler(ap_password, errContainer, "WiFi password must longer than 8 characters");
+	        errors = true;
+	    }
+	}
 
 
   return !errors;
