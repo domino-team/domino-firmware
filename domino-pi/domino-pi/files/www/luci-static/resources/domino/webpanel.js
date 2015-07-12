@@ -66,6 +66,7 @@ function networkCheck(form) {
 	var gateway=form["gateway"];
 	var dns=form["dns"];
 
+	var ap_enable=form["ap_enable"];
 	var ap_ssid = form["ap_ssid"];
 	var ap_encryption = form["ap_encryption"];
 	var ap_password = form["ap_password"];
@@ -141,31 +142,35 @@ function networkCheck(form) {
 
 	  if (!wifi_password.disabled && wifi_encryption.value != "none") {
 		if (nullOrEmpty(wifi_password.value)) {
-		  errorHandler(wifi_password, errContainer, "Please choose a WiFi password");
-		  errors = true;
-		} else if (wifi_encryption.value != "wep" && wifi_password.value.length < 8) {
-		  errorHandler(wifi_password, errContainer, "WiFi password should be 8 char at least");
+			
+		}else if(wifi_encryption.value == "wep" && ap_password.value.length != 13 && ap_password.value.length !=5){
+			errorHandler(wifi_password, errContainer, "WiFi password must be 5 or 13 characters");
+			errors = true;
+		}
+		else if (wifi_encryption.value != "wep" && wifi_password.value.length < 8) {
+		  errorHandler(wifi_password, errContainer, "WiFi password must be at least 8 characters");
 		  errors = true;
 		}
 	  }
 	}
 	
-	if(nullOrEmpty(ap_ssid.value)){
-	    errorHandler(ap_ssid, errContainer, "SSID required");
-	    errors = true;
+	if(ap_enable.checked){
+		if(nullOrEmpty(ap_ssid.value)){
+			errorHandler(ap_ssid, errContainer, "SSID required");
+			errors = true;
+		}
+		if(ap_encryption.value=="wep" && ap_password.placeholder != "Keep Unchanged"){
+			if(ap_password.value.length != 13 && ap_password.value.length !=5){
+				errorHandler(ap_password, errContainer, "WiFi password must be 5 or 13 characters");
+				errors = true;
+			}
+		}else if(ap_encryption.value !="none" && ap_password.placeholder != "Keep Unchanged"){
+			if(ap_password.value.length <8 && ap_password.value !=""){
+				errorHandler(ap_password, errContainer, "WiFi password must be at least 8 characters");
+				errors = true;
+			}
+		}
 	}
-	if(ap_encryption.value=="wep"){
-	    if(ap_password.value.length != 13 && ap_password.value.length !=5){
-	        errorHandler(ap_password, errContainer, "WiFi password must be 5 or 13 characters");
-	        errors = true;
-	    }
-	}else if(ap_encryption.value !="none"){
-	    if(ap_password.value.length <8){
-	        errorHandler(ap_password, errContainer, "WiFi password must longer than 8 characters");
-	        errors = true;
-	    }
-	}
-
 
   return !errors;
 }
