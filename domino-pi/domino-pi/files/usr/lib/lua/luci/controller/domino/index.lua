@@ -1033,12 +1033,14 @@ function network_post()
 		uci:delete("wireless","sta")
 	elseif wan_protocol=="static" then
 		uci:set("network","wan","proto","static")
+		uci:set("network","wan","ifname","eth0")
 		uci:set("network","wan","ipaddr",params["ipaddr"])
 		uci:set("network","wan","netmask",params["netmask"])
 		uci:set("network","wan","gateway",params["gateway"])
 		uci:set("network","wan","dns",params["dns"])
 	elseif wan_protocol=="pppoe" then
 		uci:set("network","wan","proto","pppoe")
+		uci:set("network","wan","ifname","eth0")
 		uci:set("network","wan","username",params["username"])
 		uci:set("network","wan","password",params["password"])
 	elseif wan_protocol=="3g" then

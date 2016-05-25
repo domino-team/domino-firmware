@@ -17,9 +17,8 @@ define Package/domino-pi
   SECTION:=base
   CATEGORY:=domino
   TITLE:=Files for Domino Pi
-# DEPENDS:=+libpthread $(INTL_DEPENDS) $(ICONV_DEPENDS) +ethtool 
-  DEPENDS:=+libpthread +ethtool +blkid +libubox +iwinfo\
-   +avahi-daemon +avahi-dnsconfd +avahi-utils +block-mount +curl +samba36-server \
+  DEPENDS:=+libpthread +ethtool +blkid +libubox +iwinfo \
+   +avahi-dbus-daemon +avahi-daemon-service-http +avahi-daemon-service-ssh +avahi-dnsconfd +avahi-autoipd +avahi-utils +block-mount +curl +samba36-server \
    +gnupg +hotplug2 +iw +jshn +kmod-crypto-aes +kmod-crypto-arc4 +kmod-crypto-core +kmod-crypto-hash +kmod-crypto-manager \
    +kmod-fs-ext4 +kmod-fs-ntfs +kmod-fs-vfat +kmod-fs-ext4 +ntfs-3g +kmod-fs-hfs +kmod-fs-hfsplus +kmod-fs-reiserfs +kmod-fuse +kmod-loop\
    +kmod-gpio-button-hotplug +kmod-i2c-core +kmod-leds-gpio +kmod-ledtrig-default-on +kmod-ledtrig-netdev +kmod-ledtrig-timer +kmod-ledtrig-usbdev +kmod-lib-crc-ccitt +kmod-lib-crc16\
@@ -31,12 +30,11 @@ define Package/domino-pi
    +luci +luci-i18n-english +luci-lib-json +luci-lib-nixio \
    +rng-tools +uhttpd-mod-lua +uhttpd-mod-tls +uhttpd-mod-ubus \
    +usbutils +wget +mjpg-streamer\
-   +kmod-video-core +kmod-video-uvc +kmod-video-gspca-core +kmod-video-gspca-zc3xx +kmod-video-gspca-sonixb ++kmod-video-gspca-sonixj \
+   +kmod-video-core +kmod-video-uvc +kmod-video-gspca-core +kmod-video-gspca-zc3xx +kmod-video-gspca-sonixb +kmod-video-gspca-sonixj \
    +@BUSYBOX_CUSTOM +@BUSYBOX_CONFIG_UNICODE_SUPPORT \
    +@BUSYBOX_CONFIG_UNICODE_COMBINING_WCHARS +@BUSYBOX_CONFIG_UNICODE_WIDE_WCHARS +@BUSYBOX_CONFIG_UNICODE_BIDI_SUPPORT +@BUSYBOX_CONFIG_UNICODE_NEUTRAL_TABLE +@BUSYBOX_CONFIG_UNICODE_PRESERVE_BROKEN  \
    +@BUSYBOX_CONFIG_FEATURE_WGET_TIMEOUT +@BUSYBOX_CONFIG_FUSER +@BUSYBOX_CONFIG_IPCRM +@BUSYBOX_CONFIG_IPCS \
-   +@BUSYBOX_CONFIG_FEATURE_FLOAT_SLEEP +@BUSYBOX_CONFIG_STTY 
-   #+@BUSYBOX_CONFIG_SUBST_WCHAR=63 +@BUSYBOX_CONFIG_LAST_SUPPORT_WCHAR=195101 \
+   +@BUSYBOX_CONFIG_FEATURE_FLOAT_SLEEP +@BUSYBOX_CONFIG_STTY
 
 endef
 

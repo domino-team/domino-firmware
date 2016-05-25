@@ -404,7 +404,9 @@ function uploadCanceled(evt) {
 
 function onclick_upgrade() {
   $("#progress_bar_upload").attr("style", "visibility:visible");
+  $(this).form.submit();
   $("#upload_button").addClass("btn").attr("disabled", "true");
+  return false;
 }
 function check_firmware_online(){
 	$.getJSON(check_url,function (data){
